@@ -9,14 +9,14 @@ router.use(authenticate);
 
 router.get('/stats', async (req, res) => {
   try {
-    let projects, taskFilter;
+    let projects, taskFilter, memberships;
 
     if (req.user.role === 'admin') {
       projects = await Project.findAll({ where: { status: 'active' }, attributes: ['id'] });
       const projectIds = projects.map(p => p.id);
       taskFilter = { projectId: { [Op.in]: projectIds } };
     } else {
-      const memberships = await ProjectMember.findAll({
+      memberships = await ProjectMember.findAll({
         where: { userId: req.user.id },
         include: [{ model: Project, where: { status: 'active' }, attributes: ['id'] }],
       });
@@ -60,7 +60,8 @@ router.get('/stats', async (req, res) => {
       recentTasks,
     });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Dashboard stats error:', err.message); // ✅ added this
+    res.status(500).json({ error: err.message }); // ✅ now returns real error
   }
 });
 
